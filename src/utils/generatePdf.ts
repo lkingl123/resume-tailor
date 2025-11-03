@@ -91,7 +91,22 @@ export const generateResumePDF = (result: any): void => {
     add("PROFESSIONAL EXPERIENCE", 11, true);
     result.experience.forEach((exp: any) => {
       add(`${exp.company || ""}, ${exp.location || ""}`, 10, true);
-      add(`${exp.title || ""}     ${exp.dates || ""}`, 9.5);
+
+      // --- Title left, date right ---
+      if (exp.title || exp.dates) {
+        const titleX = leftMargin;
+        const dateX = pageWidth - rightMargin;
+        const fontSize = 9.5;
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(fontSize);
+        doc.text(exp.title || "", titleX, 0, { align: "left" }); // store line only
+        content.push({
+          text: JSON.stringify({ title: exp.title, date: exp.dates, fontSize }),
+          size: fontSize,
+          bold: false,
+        });
+      }
+
       if (exp.bullets) {
         (Array.isArray(exp.bullets) ? exp.bullets : [exp.bullets])
           .filter(Boolean)
@@ -105,7 +120,20 @@ export const generateResumePDF = (result: any): void => {
   if (Array.isArray(result.projects) && result.projects.length > 0) {
     add("PROJECTS", 11, true);
     result.projects.forEach((proj: any) => {
-      add(`${proj.title || ""}     ${proj.dates || ""}`, 10, true);
+      // --- Title left, date right ---
+      if (proj.title || proj.dates) {
+        const titleX = leftMargin;
+        const dateX = pageWidth - rightMargin;
+        const fontSize = 10;
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(fontSize);
+        content.push({
+          text: JSON.stringify({ title: proj.title, date: proj.dates, fontSize }),
+          size: fontSize,
+          bold: true,
+        });
+      }
+
       if (proj.bullets) {
         (Array.isArray(proj.bullets) ? proj.bullets : [proj.bullets])
           .filter(Boolean)
@@ -115,7 +143,7 @@ export const generateResumePDF = (result: any): void => {
     });
   }
 
-  // === EDUCATION ===
+  // === EDUCATION === (unchanged)
   if (Array.isArray(result.education) && result.education.length > 0) {
     add("EDUCATION & CERTIFICATES", 11, true);
     result.education.forEach((edu: any) => {
@@ -129,11 +157,8 @@ export const generateResumePDF = (result: any): void => {
   const totalLines = content.length;
   const availableHeight = bottomLimit - topMargin;
   const usedHeight = totalLines * baseLine;
-
   let scaleFactor = 1;
   let lineHeight = baseLine;
-
-  // If content exceeds the page, compress text size and spacing proportionally
   if (usedHeight > availableHeight) {
     scaleFactor = availableHeight / usedHeight;
     lineHeight = baseLine * scaleFactor;
@@ -147,22 +172,25 @@ export const generateResumePDF = (result: any): void => {
     lineHeight,
   });
 
-  // === DRAW CONTENT (scaled) ===
+  // === DRAW CONTENT ===
   let y = topMargin;
   content.forEach(({ text, size, bold, indent }: LineItem) => {
     const adjustedSize = size * scaleFactor;
     doc.setFont("helvetica", bold ? "bold" : "normal");
     doc.setFontSize(adjustedSize);
-    doc.text(text, leftMargin + (indent || 0), y, { align: "left" });
+
+    // Detect right-aligned JSON lines (experience/project headers)
+    if (text.startsWith("{") && text.includes('"title"')) {
+      const { title, date, fontSize } = JSON.parse(text);
+      doc.text(title || "", leftMargin, y, { align: "left" });
+      if (date) doc.text(date, pageWidth - rightMargin, y, { align: "right" });
+    } else {
+      doc.text(text, leftMargin + (indent || 0), y, { align: "left" });
+    }
     y += lineHeight;
   });
 
-  console.log("=== FINAL PAGE ===", {
-    finalY: y,
-    scaleFactor,
-    totalPages: doc.getNumberOfPages(),
-  });
-
+  console.log("=== FINAL PAGE ===", { finalY: y, scaleFactor });
   doc.save("Resume_for_Companies.pdf");
   console.log("✅ Resume generated (fits within one page).");
 };

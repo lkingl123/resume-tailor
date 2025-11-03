@@ -49,8 +49,7 @@
       "bullets": [
         "Developed a full-stack AI image inpainting platform using Flask, Next.js, and Stability AI REST API for natural smile enhancements.",
         "Integrated Firebase Storage for secure upload and retrieval, automating the image pipeline with Python and Google Cloud Run.",
-        "Reduced manual dental photo editing by 90% through automated mouth-region detection using MediaPipe and inpainting blending.",
-        "Deployed production backend with Docker and CI/CD via Render and later migrated to Cloud Run for scalability."
+        "Reduced manual dental photo editing by 90% through automated mouth-region detection using MediaPipe and inpainting blending."
       ]
     },
     {
@@ -59,8 +58,7 @@
       "bullets": [
         "Building a HIPAA-compliant credentialing platform for healthcare providers to manage, verify, and share licensure and certification documents.",
         "Integrated CAQH API for automatic provider data imports including NPI, state licenses, DEA, malpractice insurance, and board certifications.",
-        "Implemented AI-driven document vault for secure uploads, OCR-based field extraction, and expiration tracking with smart alerts.",
-        "Designed a mobile-first interface with quick access and time-limited sharing links for credential packets and compliance files."
+        "Implemented AI-driven document vault for secure uploads, OCR-based field extraction, and expiration tracking with smart alerts."
       ]
     },
     {
