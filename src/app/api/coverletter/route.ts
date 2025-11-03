@@ -25,13 +25,11 @@ async function callOllama(prompt: string) {
 
 // === Helper: Safe JSON parsing ===
 function safeParseJSON(raw: string) {
-  let cleaned = raw
-    .replace(/```json|```/g, "")
-    .replace(/^[^{]*\{/, "{")
-    .replace(/\}[^}]*$/, "}");
+  const match = raw.match(/\{[\s\S]*\}/);
+  const jsonOnly = match ? match[0] : raw;
 
   try {
-    const repaired = jsonrepair(cleaned);
+    const repaired = jsonrepair(jsonOnly);
     return JSON.parse(repaired);
   } catch {
     console.warn("⚠️ Could not parse JSON. Returning raw text instead.");
@@ -39,7 +37,7 @@ function safeParseJSON(raw: string) {
   }
 }
 
-// === POST handler ===
+// === MAIN HANDLER ===
 export async function POST(req: NextRequest) {
   try {
     const { jobDescription, companyName } = await req.json();
@@ -55,24 +53,32 @@ export async function POST(req: NextRequest) {
     const resumePath = path.join(process.cwd(), "src", "data", "base_resume.json");
     const baseResume = JSON.parse(fs.readFileSync(resumePath, "utf-8"));
 
-    // === Prompt ===
+    // === PROMPT ===
     const prompt = `
 You are a professional resume and cover letter writer.
 
-Task: Write a professional, tailored cover letter for the company "${companyName}" 
-based on the user's resume and job description below.
+STRICT OUTPUT RULE:
+Return ONLY a valid JSON object — no explanations, no markdown, and no commentary.
+If anything other than JSON is included, the response is invalid.
+Output format:
+{"coverLetter": "..."}
 
-Guidelines:
+Task:
+Write a professional, tailored cover letter for "${companyName}" using the provided job description and resume.
+
+Objectives:
+- Connect the applicant’s experience and skills to the company’s goals and responsibilities.
+- Highlight transferable strengths: automation, workflow optimization, AI systems, onboarding, innovation.
+- DO NOT invent or imply any job titles not present in the resume.
+- If the job description contains a section title (e.g., "Project Management"), discuss it as a *functional area* the applicant contributes to — not a formal title.
+- DO NOT mention specific platforms or tools (e.g., Yardi, Salesforce, SAP) unless they are listed in the resume.
+- Tone: confident, factual, and conversational.
+- Mention "${companyName}" exactly once.
 - Length: 150–200 words.
-- Tone: Confident, conversational, and human — not robotic.
-- Mention "${companyName}" only once in the letter.
-- Mention relevant achievements or transferable skills.
-- No repeating the resume verbatim.
-- End with a call to action such as "I look forward to discussing further."
-- Output must be STRICT JSON in this format ONLY:
-{
-  "coverLetter": "..."
-}
+- End with this closing:
+  "Thank you for your time and consideration.
+  Best regards,
+  Jake Loke"
 
 === JOB DESCRIPTION ===
 ${jobDescription}
@@ -81,7 +87,10 @@ ${jobDescription}
 ${JSON.stringify(baseResume, null, 2)}
 `;
 
+    // === Call Ollama ===
     const rawResponse = await callOllama(prompt);
+
+    // === Parse safely ===
     const data = safeParseJSON(rawResponse);
     const finalLetter = data.coverLetter?.trim() || rawResponse;
 
