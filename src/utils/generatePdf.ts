@@ -1,56 +1,22 @@
 import jsPDF from "jspdf";
 
-// --- TYPES ---
-interface ResumeHeader {
-  name?: string;
-  location?: string;
-  phone?: string;
-  github?: string;
-  linkedin?: string;
-}
-
-interface Experience {
-  company?: string;
-  location?: string;
-  title?: string;
-  dates?: string;
-  bullets?: string[] | string | undefined;
-}
-
-interface Education {
-  school?: string;
-  degree?: string;
-  dates?: string;
-}
-
-interface TechnicalSkills {
-  [key: string]: string[] | string;
-}
-
-export interface ResumeData {
-  header?: ResumeHeader;
-  summary?: string;
-  experience?: Experience[];
-  education?: Education[];
-  technical_skills?: TechnicalSkills;
-  text?: string;
-}
-
-// --- MAIN FUNCTION ---
-export const generateResumePDF = (result: ResumeData): void => {
-  if (!result) {
-    alert("No tailored resume found!");
-    return;
-  }
-
+export const generateResumePDF = (result: any): void => {
   const doc = new jsPDF({ orientation: "p", unit: "pt", format: "a4" });
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
 
-  const left = 45;
-  const right = 550;
-  const width = right - left;
-  const baseLine = 12;
-  const topMargin = 60;
-  const bottomLimit = 780;
+  // --- margins ---
+  const leftMargin = 25;
+  const rightMargin = 25;
+  const usableWidth = pageWidth - leftMargin - rightMargin;
+  const topMargin = 40;
+  const bottomLimit = pageHeight - 40;
+
+  // --- base line settings ---
+  const baseLine = 11; // baseline spacing
+  const minSpacing = 3; // minimal space between sections
+
+  console.log("=== PAGE METRICS ===", { pageWidth, pageHeight, usableWidth });
 
   interface LineItem {
     text: string;
@@ -61,21 +27,35 @@ export const generateResumePDF = (result: ResumeData): void => {
 
   const content: LineItem[] = [];
 
-  const add = (
-    text: string | string[] | undefined,
-    size = 10,
-    bold = false,
-    indent = 0
-  ): void => {
+  // --- custom word-wrap ---
+  const splitToFullWidth = (text: string, fontSize: number, maxWidth: number): string[] => {
+    doc.setFontSize(fontSize);
+    const words = text.split(" ");
+    const lines: string[] = [];
+    let current = "";
+    for (const word of words) {
+      const test = current ? current + " " + word : word;
+      if (doc.getTextWidth(test) > maxWidth && current) {
+        lines.push(current);
+        current = word;
+      } else {
+        current = test;
+      }
+    }
+    if (current) lines.push(current);
+    return lines;
+  };
+
+  const add = (text: string | string[] | undefined, size = 10, bold = false, indent = 0): void => {
     if (!text) return;
-    const lines: string[] = Array.isArray(text)
-      ? text.filter((t): t is string => Boolean(t))
-      : doc.splitTextToSize(text, width - indent);
-    lines.forEach((line: string) => content.push({ text: line, size, bold, indent }));
+    const lines = Array.isArray(text)
+      ? text.filter(Boolean)
+      : splitToFullWidth(text, size, usableWidth - indent);
+    lines.forEach(line => content.push({ text: line, size, bold, indent }));
   };
 
   // === HEADER ===
-  add(result.header?.name || "Your Name", 20, true);
+  add(result.header?.name || "Your Name", 18, true);
   add(
     [
       [
@@ -87,91 +67,86 @@ export const generateResumePDF = (result: ResumeData): void => {
         .filter(Boolean)
         .join(" | "),
     ],
-    10,
-    false
+    9
   );
-
-  add("", 8, false);
+  add("", minSpacing);
 
   // === SUMMARY ===
   add("SUMMARY OF QUALIFICATIONS", 11, true);
-  add(result.summary || "N/A", 10, false);
-
-  add("", 8, false);
+  add(result.summary || "N/A", 9.5);
+  add("", minSpacing);
 
   // === TECHNICAL SKILLS ===
   if (result.technical_skills) {
     add("TECHNICAL SKILLS", 11, true);
-    for (const [key, value] of Object.entries(result.technical_skills)) {
-      const joined =
-        typeof value === "string" ? value : (value as string[]).join(", ");
-      add(`${key[0].toUpperCase() + key.slice(1)}: ${joined}`, 10, false);
+    for (const [key, val] of Object.entries(result.technical_skills)) {
+      const joined = Array.isArray(val) ? val.join(", ") : val;
+      add(`${key[0].toUpperCase() + key.slice(1)}: ${joined}`, 9.5);
     }
+    add("", minSpacing);
   }
-
-  add("", 8, false);
 
   // === EXPERIENCE ===
   if (Array.isArray(result.experience)) {
     add("PROFESSIONAL EXPERIENCE", 11, true);
-    result.experience.forEach((exp: Experience) => {
-      add(`${exp.company || ""}, ${exp.location || ""}`, 10.5, true);
-      add(`${exp.title || ""}     ${exp.dates || ""}`, 10, false);
-
+    result.experience.forEach((exp: any, i: number) => {
+      add(`${exp.company || ""}, ${exp.location || ""}`, 10, true);
+      add(`${exp.title || ""}     ${exp.dates || ""}`, 9.5);
       if (exp.bullets) {
-        const bullets = Array.isArray(exp.bullets)
-          ? exp.bullets
-          : [exp.bullets];
-        bullets
-          .filter((b): b is string => Boolean(b))
-          .forEach((b: string) => add(`• ${b}`, 10, false, 15));
+        (Array.isArray(exp.bullets) ? exp.bullets : [exp.bullets])
+          .filter(Boolean)
+          .forEach((b: string, idx: number) => add(`• ${b}`, 9.5, false, 12));
       }
-
-      add("", 6, false);
+      add("", minSpacing);
     });
   }
-
-  add("", 8, false);
 
   // === EDUCATION ===
   if (Array.isArray(result.education)) {
     add("EDUCATION & CERTIFICATES", 11, true);
-    result.education.forEach((edu: Education) => {
-      add(edu.school || "Unknown School", 10.5, true);
-      const degreeLine = `${edu.degree || ""}${
-        edu.dates ? ` — ${edu.dates}` : ""
-      }`;
-      add(degreeLine, 10, false);
-      add("", 6, false);
+    result.education.forEach((edu: any, i: number) => {
+      add(edu.school || "Unknown School", 10, true);
+      add(`${edu.degree || ""}${edu.dates ? ` | ${edu.dates}` : ""}`, 9.5);
+      add("", minSpacing);
     });
   }
 
-  // --- SMART PAGE BALANCE ---
+  // === Calculate dynamic spacing ===
   const totalLines = content.length;
   const usedHeight = totalLines * baseLine;
   const remaining = bottomLimit - topMargin - usedHeight;
-  const extraPerLine = remaining > 0 ? remaining / totalLines : 0;
-  const lineHeight = baseLine + extraPerLine;
+  const stretchPerLine = remaining > 0 ? remaining / totalLines : 0;
+  const lineHeight = baseLine + stretchPerLine; // evenly stretch vertically
 
-  console.log(
-    `[ResumeTailor] Lines: ${totalLines}, BaseHeight: ${baseLine}, Stretch: +${extraPerLine.toFixed(
-      2
-    )} per line`
-  );
+  console.log("=== SPACING ADJUST ===", {
+    totalLines,
+    usedHeight,
+    remaining,
+    stretchPerLine,
+    lineHeight,
+  });
 
+  // === DRAW TEXT ===
   let y = topMargin;
-
   content.forEach(({ text, size, bold, indent }: LineItem) => {
     if (y + lineHeight > bottomLimit) {
       doc.addPage();
       y = topMargin;
     }
+
+    // ❌ removed underline (was visually unnecessary)
     doc.setFont("helvetica", bold ? "bold" : "normal");
     doc.setFontSize(size);
-    doc.text(text, left + (indent || 0), y);
+    doc.text(text, leftMargin + (indent || 0), y, { align: "left" });
+
     y += lineHeight;
   });
 
+  console.log("=== FINAL PAGE METRICS ===", {
+    finalY: y,
+    totalPages: doc.getNumberOfPages(),
+  });
+
   doc.save("Resume_for_Companies.pdf");
-  console.log("✅ Resume_for_Companies.pdf generated successfully!");
+  console.log("✅ Resume generated with full dynamic fill.");
 };

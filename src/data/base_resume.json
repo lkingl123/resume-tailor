@@ -6,7 +6,7 @@
     "github": "https://github.com/lkingl123",
     "linkedin": "https://linkedin.com/in/jakeloke"
   },
-  "summary": "{{ai_summary}}",
+  "summary": "Results-driven Software Engineer specializing in front-end development and UX design. Skilled in React, Next.js, and .NET Core, with experience building scalable, data-driven platforms for education and e-commerce.",
   "technical_skills": {
     "languages": ["C#", "JavaScript", "TypeScript", "Python", "SQL", "Bash"],
     "frameworks": [".NET Core", "React", "Next.js", "Tailwind CSS"],
@@ -34,7 +34,7 @@
     {
       "school": "University of Utah",
       "degree": "Master of Science in Information Technology",
-      "dates": "Aug 2022 – Aug 2023"
+      "dates": "Aug 2023"
     },
     {
       "school": "Utah Valley University",

@@ -36,13 +36,18 @@ ${resumeJSON}
 Return a JSON with the same structure, replacing only:
 - "summary"
 - any field containing "bullets" with rewritten content.
+
+Avoid mentioning frameworks, tools, or technologies that are not already present in the original resume.
+Focus on results, impact, metrics, and action-oriented phrasing (e.g., improved, delivered, implemented).
+Do not mention Vue.js, Angular, or other unrelated technologies.
+Keep tone professional, concise, and accomplishment-based.
 `;
 
     const response = await fetch("http://localhost:11434/api/generate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "llama3", // or another model you installed
+        model: "llama3",
         prompt,
         stream: false,
       }),
