@@ -112,7 +112,6 @@ export const generateResumePDF = (result: any): void => {
     result.education.forEach((edu: any) => {
       addDualLine(edu.school || "", edu.dates || "", 9.5);
       addLine(edu.degree || "", 9.5, false, 12);
-      addSpacing(0.5);
     });
   }
 

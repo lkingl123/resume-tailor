@@ -98,15 +98,6 @@
       ]
     },
     {
-      "title": "Orange (Provider Credentialing & Compliance Platform)",
-      "dates": "Jun 2025 – Present",
-      "bullets": [
-        "Building a HIPAA-compliant credentialing platform for healthcare providers to manage, verify, and share licensure and certification documents.",
-        "Integrated CAQH API for automatic provider data imports including NPI, state licenses, DEA, malpractice insurance, and board certifications.",
-        "Implemented AI-driven document vault for secure uploads, OCR-based field extraction, and expiration tracking with smart alerts."
-      ]
-    },
-    {
       "title": "Pure Labs Catalog (BOM Costing & E-Commerce)",
       "dates": "Jan 2023 – Jul 2023",
       "bullets": [
