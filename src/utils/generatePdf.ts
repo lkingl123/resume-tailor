@@ -16,14 +16,20 @@ export const generateResumePDF = (result: any): void => {
   // Position tracker
   let y = topMargin;
 
-  const addLine = (text: string, size = 10, bold = false, indent = 0) => {
+  const addLine = (text: string, size = 10, bold = false, indent = 0, align: "left" | "center" | "right" = "left") => {
     if (!text) return;
     doc.setFontSize(size);
     doc.setFont("helvetica", bold ? "bold" : "normal");
     const lines: string[] = doc.splitTextToSize(text, usableWidth - indent);
     lines.forEach((line: string) => {
       if (y > bottomLimit) doc.addPage(), (y = topMargin);
-      doc.text(line, leftMargin + indent, y);
+      const x =
+        align === "center"
+          ? pageWidth / 2
+          : align === "right"
+          ? pageWidth - rightMargin
+          : leftMargin + indent;
+      doc.text(line, x, y, { align });
       y += baseLine;
     });
   };
@@ -41,7 +47,10 @@ export const generateResumePDF = (result: any): void => {
   const addSpacing = (lines = 1) => (y += baseLine * lines);
 
   // === HEADER ===
-  addLine(result.header?.name || "Your Name", 18, true);
+  const name = result.header?.name || "Your Name";
+  addLine(name, 20, true, 0, "center"); // ✅ Centered name
+  addSpacing(0.3);
+
   const headerLine = [
     result.header?.location,
     result.header?.phone,
@@ -50,8 +59,8 @@ export const generateResumePDF = (result: any): void => {
   ]
     .filter(Boolean)
     .join(" | ");
-  addLine(headerLine, 9);
-  addSpacing();
+  addLine(headerLine, 9, false, 0, "center"); // ✅ Centered contact info
+  addSpacing(1);
 
   // === SUMMARY ===
   if (result.summary) {
@@ -109,5 +118,5 @@ export const generateResumePDF = (result: any): void => {
 
   // === SAVE ===
   doc.save("Resume_for_Companies.pdf");
-  console.log("✅ Resume generated correctly (titles left, bold dates right).");
+  console.log("✅ Resume generated correctly (name centered, bold dates right).");
 };
