@@ -1,10 +1,10 @@
 import jsPDF from "jspdf";
 
 /**
- * Generates a PDF from a cover letter string.
- * @param data An object with a header (title) and body (cover letter content).
+ * Generates a PDF for a cover letter.
+ * @param data An object with a header, body, and company name.
  */
-export const generateCoverLetterPDF = (data: { header: string; body: string }): void => {
+export const generateCoverLetterPDF = (data: { header: string; body: string; company: string }): void => {
   const doc = new jsPDF({
     orientation: "p",
     unit: "pt",
@@ -18,7 +18,6 @@ export const generateCoverLetterPDF = (data: { header: string; body: string }): 
   const rightMargin = 40;
   const topMargin = 50;
   const usableWidth = pageWidth - leftMargin - rightMargin;
-
   let y = topMargin;
 
   // === Header ===
@@ -30,7 +29,7 @@ export const generateCoverLetterPDF = (data: { header: string; body: string }): 
     y += 20;
   }
 
-  y += 10; // Space between header and body
+  y += 10; // space between header and body
 
   // === Body ===
   doc.setFont("helvetica", "normal");
@@ -46,6 +45,7 @@ export const generateCoverLetterPDF = (data: { header: string; body: string }): 
     y += 16;
   }
 
-  // Save the file
-  doc.save("cover_letter_for_company.pdf");
+  // === Dynamic File Name ===
+  const safeCompanyName = data.company.replace(/[^a-z0-9]/gi, "_").toLowerCase();
+  doc.save(`cover_letter_for_${safeCompanyName}.pdf`);
 };

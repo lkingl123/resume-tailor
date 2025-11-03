@@ -1,17 +1,20 @@
 "use client";
 import { useState } from "react";
 import { generateResumePDF } from "@/utils/generatePdf";
-import { generateCoverLetterPDF } from "@/utils/generateCoverLetterPdf"; // ✅ NEW
+import { generateCoverLetterPDF } from "@/utils/generateCoverLetterPdf";
 import { log } from "@/utils/logger";
 
 export default function HomePage() {
   const [activeTab, setActiveTab] = useState<"resume" | "cover">("resume");
   const [jobDesc, setJobDesc] = useState("");
+  const [companyName, setCompanyName] = useState("");
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
 
   const handleGenerate = async () => {
     if (!jobDesc.trim()) return alert("Please paste a job description!");
+    if (!companyName.trim()) return alert("Please enter the company name!");
+
     setLoading(true);
     setResult(null);
 
@@ -19,17 +22,21 @@ export default function HomePage() {
       activeTab === "resume" ? "/api/tailor" : "/api/coverletter";
 
     try {
+      const body = JSON.stringify({
+        jobDescription: jobDesc,
+        companyName: companyName.trim(),
+      });
+
       const res = await fetch(apiEndpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ jobDescription: jobDesc }),
+        body,
       });
 
       const data = await res.json();
       log("API response:", data);
 
       if (data.error) throw new Error(data.error);
-
       setResult(data.tailoredResume || data.coverLetter);
     } catch (err: any) {
       alert("Error: " + err.message);
@@ -42,11 +49,12 @@ export default function HomePage() {
     if (!result) return;
 
     if (activeTab === "resume") {
-      generateResumePDF(result);
+      generateResumePDF(result, companyName);
     } else {
       generateCoverLetterPDF({
-        header: "Cover Letter",
+        header: `Cover Letter for ${companyName}`,
         body: typeof result === "string" ? result : result.coverLetter,
+        company: companyName,
       });
     }
   };
@@ -81,6 +89,15 @@ export default function HomePage() {
         </button>
       </div>
 
+      {/* Company Name Input (shared for both tabs) */}
+      <input
+        type="text"
+        className="mb-4 bg-[#1e293b] border border-[#334155] p-3 rounded-md w-full max-w-4xl text-[#f1f5f9] focus:outline-none focus:ring-2 focus:ring-[#3b82f6] placeholder-gray-400"
+        placeholder="Enter the company name..."
+        value={companyName}
+        onChange={(e) => setCompanyName(e.target.value)}
+      />
+
       {/* Job Description Input */}
       <textarea
         className="bg-[#1e293b] border border-[#334155] p-4 rounded-md h-64 w-full max-w-4xl focus:outline-none focus:ring-2 focus:ring-[#3b82f6] placeholder-gray-400 text-[#f1f5f9]"
@@ -107,8 +124,8 @@ export default function HomePage() {
         <div className="mt-10 bg-[#1e293b] border border-[#334155] rounded-lg p-6 w-full max-w-5xl shadow-lg">
           <h2 className="text-2xl font-semibold text-[#3b82f6] mb-4">
             {activeTab === "resume"
-              ? "Tailored Resume (Preview)"
-              : "Generated Cover Letter"}
+              ? `Tailored Resume for ${companyName}`
+              : `Cover Letter for ${companyName}`}
           </h2>
 
           <pre className="whitespace-pre-wrap text-gray-100 text-sm font-sans leading-relaxed">
