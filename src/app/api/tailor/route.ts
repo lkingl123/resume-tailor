@@ -3,132 +3,116 @@ import fs from "fs";
 import path from "path";
 import { jsonrepair } from "jsonrepair";
 
+const OLLAMA_URL = "http://localhost:11434/api/generate";
+const MODEL = "llama3";
+
+// === Helper: call Ollama ===
+async function callOllama(prompt: string) {
+  const res = await fetch(OLLAMA_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: MODEL,
+      prompt,
+      stream: false,
+      temperature: 0.0,
+    }),
+  });
+  if (!res.ok) throw new Error(await res.text());
+  const data = await res.json();
+  return data.response.trim();
+}
+
+// === Helper: safe parse ===
+function safeParseJSON(raw: string) {
+  let jsonStr = raw
+    .replace(/^[^{]*\{/, "{")
+    .replace(/\}[^}]*$/, "}")
+    .replace(/```json|```/g, "");
+  try {
+    const repaired = jsonrepair(jsonStr);
+    return JSON.parse(repaired);
+  } catch {
+    return null;
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     const { jobDescription } = await req.json();
 
-    // === Load base resume JSON ===
+    // === Load base resume ===
     const resumePath = path.join(process.cwd(), "src", "data", "base_resume.json");
-    const resumeJSON = fs.readFileSync(resumePath, "utf-8");
+    const baseResume = JSON.parse(fs.readFileSync(resumePath, "utf-8"));
 
-    // === PROMPT (bulletproof) ===
-    const prompt = `
+    // === Build prompts ===
+    const summaryPrompt = `
 You are a professional resume writer.
 
-You will receive:
-1. A complete BASE RESUME JSON (this must be preserved exactly).
-2. A JOB DESCRIPTION.
+Task: Rewrite ONLY the "summary" section to align with the job description.
 
-Your task is to tailor the resume for the given job.
-
-🧭 RULES:
-- KEEP all names, titles, company names, dates, and education EXACTLY as in the base resume.
-- ONLY rewrite:
-  • "summary"
-  • "bullets" arrays in "experience" and "projects".
-- DO NOT modify "technical_skills" keys or their categories.
-- DO NOT add, remove, or rename fields.
-- RETURN a **single valid JSON object** only — no markdown, no commentary, no extra words.
+Rules:
+- Keep it factual.
+- No fake titles or years of experience.
+- Return JSON: { "summary": "..." }
 
 === JOB DESCRIPTION ===
 ${jobDescription}
 
-=== BASE RESUME JSON (KEEP EVERYTHING ELSE IDENTICAL) ===
-\`\`\`json
-${resumeJSON}
-\`\`\`
-
-Now return only the final tailored resume JSON object.
+=== CURRENT SUMMARY ===
+${baseResume.summary}
 `;
 
-    // === Call Ollama ===
-    const response = await fetch("http://localhost:11434/api/generate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: "llama3",
-        prompt,
-        stream: false,
-      }),
-    });
+    const expPrompt = `
+You are a technical resume editor.
 
-    if (!response.ok) {
-      const text = await response.text();
-      throw new Error(`Ollama request failed: ${text}`);
-    }
+Rewrite only the "bullets" for each job to match the job description.
 
-    const data = await response.json();
-    const aiResponse = data.response;
+Rules:
+- Keep all company names, titles, dates.
+- Focus on relevance & measurable outcomes.
+- Return JSON: { "experience": [ ... ] }
 
-    // === STEP 1: Extract possible JSON block ===
-    let rawJSON = aiResponse
-      .replace(/^[^{]*\{/, "{") // remove junk before first {
-      .replace(/\}[^}]*$/, "}") // remove junk after last }
-      .replace(/```json|```/g, "") // strip code fences
-      .replace(/^\s*Here.?s.*?{|Output:.*?{|JSON:/gi, "{"); // kill intro phrases
+=== JOB DESCRIPTION ===
+${jobDescription}
 
-    // === STEP 2: Sanitize before repair (super hardened) ===
-    rawJSON = rawJSON
-      // remove rogue commas like ", , ,"
-      .replace(/(,|\[|{)\s*,+\s*(,|\]|})/g, "$1$2")
-      // remove commas before ] or }
-      .replace(/,\s*([\]}])/g, "$1")
-      // remove commas after [ or {
-      .replace(/([\[{])\s*,\s*/g, "$1")
-      // quote unquoted keys
-      .replace(/([{,])\s*([A-Za-z0-9_]+)\s*:/g, '$1"$2":')
-      // quote bareword values
-      .replace(/:\s*([^",}\]\[]+)\s*([,}\]])/g, ':"$1"$2')
-      // remove duplicate quotes
-      .replace(/""/g, '"')
-      // compress whitespace
-      .replace(/\s+/g, " ")
-      // remove stray trailing commas
-      .replace(/,\s*(?=[}\]])/g, "")
-      // trim leftover junk
-      .replace(/^[^{]*\{/, "{")
-      .replace(/\}[^}]*$/, "}");
+=== CURRENT EXPERIENCE ===
+${JSON.stringify(baseResume.experience, null, 2)}
+`;
 
-    let tailoredResume: any;
+    // === Run both AI calls in parallel ===
+    const [summaryResponse, expResponse] = await Promise.all([
+      callOllama(summaryPrompt),
+      callOllama(expPrompt),
+    ]);
 
-    // === STEP 3: Attempt parse + repair ===
-    try {
-      const repaired = jsonrepair(rawJSON);
-      tailoredResume = JSON.parse(repaired);
-      console.log("✅ JSON successfully parsed and repaired.");
-    } catch (err) {
-      console.warn("⚠️ Primary parse failed, attempting regex fallback...");
+    const summaryData = safeParseJSON(summaryResponse);
+    const expData = safeParseJSON(expResponse);
 
-      try {
-        const cleaned = rawJSON
-          .replace(/:\s*undefined/g, ':""')
-          .replace(/:\s*null/g, ':""')
-          .replace(/:\s*NaN/g, ':""')
-          .replace(/,\s*([\]}])/g, "$1");
-        const repaired = jsonrepair(cleaned);
-        tailoredResume = JSON.parse(repaired);
-        console.log("✅ JSON repaired using fallback parser.");
-      } catch (err2) {
-        console.error("❌ JSON completely invalid, returning raw text.", err2);
-        tailoredResume = { text: aiResponse };
-      }
-    }
+    // === Merge results with fallbacks ===
+    const newSummary = summaryData?.summary || baseResume.summary;
 
-    // === STEP 4: Safety validation ===
-    if (tailoredResume && typeof tailoredResume === "object") {
-      tailoredResume.experience ??= [];
-      tailoredResume.projects ??= [];
-      tailoredResume.education ??= [];
-      tailoredResume.summary ??= "";
+    const newExperience =
+      Array.isArray(expData?.experience) && expData.experience.length > 0
+        ? baseResume.experience.map((exp: any, i: number) => ({
+            ...exp,
+            bullets:
+              Array.isArray(expData.experience[i]?.bullets) &&
+              expData.experience[i].bullets.length > 0
+                ? expData.experience[i].bullets
+                : exp.bullets,
+          }))
+        : baseResume.experience;
 
-      for (const exp of tailoredResume.experience) {
-        if (!Array.isArray(exp.bullets)) exp.bullets = [];
-      }
-      for (const proj of tailoredResume.projects) {
-        if (!Array.isArray(proj.bullets)) proj.bullets = [];
-      }
-    }
+    const tailoredResume = {
+      ...baseResume,
+      summary: newSummary,
+      experience: newExperience,
+      projects: baseResume.projects,
+      education: baseResume.education,
+    };
 
+    console.log("✅ Tailored resume generated (parallel mode)");
     return NextResponse.json({ tailoredResume });
   } catch (err: any) {
     console.error("❌ Error in tailor API:", err);
