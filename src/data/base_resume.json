@@ -1,0 +1,50 @@
+{
+  "header": {
+    "name": "King Loke (Jake)",
+    "location": "West Jordan, UT",
+    "phone": "385-392-3207",
+    "github": "https://github.com/lkingl123",
+    "linkedin": "https://linkedin.com/in/jakeloke"
+  },
+  "summary": "{{ai_summary}}",
+  "technical_skills": {
+    "languages": ["C#", "JavaScript", "TypeScript", "Python", "SQL", "Bash"],
+    "frameworks": [".NET Core", "React", "Next.js", "Tailwind CSS"],
+    "cloud": ["Azure AD B2C", "Firebase", "Google Cloud Run"],
+    "architecture": ["DDD", "Event-Driven", "Minimal APIs"],
+    "tools": ["Docker", "GitHub Actions", "xUnit", "Postman", "Swagger"]
+  },
+  "experience": [
+    {
+      "company": "Utah State Board of Education",
+      "location": "Salt Lake City, UT",
+      "title": "Software Engineer",
+      "dates": "Mar 2023 – Present",
+      "bullets": "{{ai_rewrite_experience_usbe}}"
+    },
+    {
+      "company": "University of Utah",
+      "location": "Salt Lake City, UT",
+      "title": "Tier 3 Support",
+      "dates": "Aug 2022 – Aug 2023",
+      "bullets": "{{ai_rewrite_experience_utah}}"
+    }
+  ],
+  "education": [
+    {
+      "school": "University of Utah",
+      "degree": "Master of Science in Information Technology",
+      "dates": "Aug 2022 – Aug 2023"
+    },
+    {
+      "school": "Utah Valley University",
+      "degree": "Certificate of Proficiency – Information Technology",
+      "dates": "Apr 2022"
+    },
+    {
+      "school": "Brigham Young University–Idaho",
+      "degree": "Bachelor of Science, Business Analyst",
+      "dates": "Apr 2020"
+    }
+  ]
+}
