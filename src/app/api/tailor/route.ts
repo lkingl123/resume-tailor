@@ -15,7 +15,7 @@ async function callOllama(prompt: string) {
       model: MODEL,
       prompt,
       stream: false,
-      temperature: 0.4, // Adds light creativity without hallucinating
+      temperature: 0.7, // balanced creativity
     }),
   });
   if (!res.ok) throw new Error(await res.text());
@@ -42,6 +42,7 @@ function validBullets(arr: any): boolean {
   return Array.isArray(arr) && arr.every((b) => typeof b === "string" && b.length > 0);
 }
 
+// === MAIN HANDLER ===
 export async function POST(req: NextRequest) {
   try {
     const { jobDescription } = await req.json();
@@ -54,12 +55,16 @@ export async function POST(req: NextRequest) {
     const summaryPrompt = `
 You are a professional resume writer.
 
-Task: Rewrite ONLY the "summary" section to align with the job description.
+Task: Rewrite ONLY the "summary" section to align with the given job description.
 
 Rules:
 - Keep it factual and professional.
-- No fake titles or made-up years of experience.
-- Return only valid JSON exactly in this format:
+- Do NOT add fake titles, companies, or years of experience.
+- Do NOT mention the company name directly.
+- Make it sound confident and natural, like a strong LinkedIn summary.
+- Keep it concise (3–5 sentences).
+- Focus on aligning tone and relevant strengths to the job posting.
+- Return valid JSON exactly in this format:
 {
   "summary": "..."
 }
@@ -71,22 +76,23 @@ ${jobDescription}
 ${baseResume.summary}
 `;
 
-    // === EXPERIENCE PROMPT (ENHANCED) ===
+    // === EXPERIENCE PROMPT (CONTEXT-AWARE DYNAMIC VERSION) ===
     const expPrompt = `
-You are a professional technical resume editor.
+You are a professional technical resume writer.
 
-Task: Rewrite the "bullets" for each experience entry below so that they align with the job description — even if the role title differs.
+Task: Rewrite the "bullets" for each experience entry below so that they naturally align with the provided job description — focusing on transferable skills, scope, and measurable outcomes.
 
-Rules:
+Guidelines:
 - Keep "company", "location", "title", and "dates" unchanged.
-- Always generate bullets for every job — do NOT write "Not applicable".
-- Use the "title" as a creative context guide. For example:
-  - Software Engineer → emphasize coding, architecture, testing, cloud integration.
-  - Tier 3 Support → emphasize problem-solving, debugging, customer support.
-  - Business Analyst → emphasize requirements gathering, process improvement, data analysis.
-- Highlight measurable outcomes and transferable skills (e.g., collaboration, systems improvement, automation).
-- Write exactly 3 concise bullet points using action verbs.
-- Return VALID JSON in this format:
+- Write exactly 3 concise bullet points for each role.
+- You may reference technologies, tools, or concepts mentioned in the job description (e.g., APIs, Salesforce, Zoom), but do NOT imply that the candidate worked for or represented the company hiring (e.g., Gong.io).
+- Emphasize impact, collaboration, and problem-solving.
+- Avoid filler words like "responsible for" or "helped with".
+- Use action verbs (e.g., Designed, Implemented, Automated, Improved).
+- Maintain a professional and confident tone, suitable for modern tech resumes.
+- Do NOT include any bracketed placeholders like [team names] or [technologies].
+- Keep bullets 1–2 lines long, clear, and results-driven.
+- Return only VALID JSON in this format:
 {
   "experience": [
     { "bullets": ["bullet 1", "bullet 2", "bullet 3"] },
@@ -124,9 +130,9 @@ ${JSON.stringify(baseResume.experience, null, 2)}
             bullets: validBullets(aiBullets)
               ? aiBullets
               : [
-                  `${exp.title}: Contributed to project success and applied transferable analytical or technical skills.`,
-                  `${exp.title}: Supported cross-functional teams through documentation, communication, or problem-solving.`,
-                  `${exp.title}: Strengthened workflows and outcomes aligned with organizational goals.`,
+                  `${exp.title}: Applied transferable technical skills to achieve measurable impact.`,
+                  `${exp.title}: Collaborated across departments to streamline workflows and resolve issues.`,
+                  `${exp.title}: Improved systems, documentation, and support efficiency through proactive solutions.`,
                 ],
           };
         })
