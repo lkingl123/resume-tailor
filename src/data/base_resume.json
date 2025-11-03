@@ -112,8 +112,7 @@
       "bullets": [
         "Built a cosmetic product catalog dashboard in Next.js with dynamic BOM editing and real-time cost breakdown calculators.",
         "Integrated InFlow Inventory API with tiered pricing overrides and internal/external PDF exports.",
-        "Added caching and rate-limiting to API requests (60 req/min cap), improving fetch stability and load times by 40%.",
-        "Enabled Shopify-copyable marketing templates for non-technical managers to publish updated formulas instantly."
+        "Added caching and rate-limiting to API requests (60 req/min cap), improving fetch stability and load times by 40%."
       ]
     }
   ],
