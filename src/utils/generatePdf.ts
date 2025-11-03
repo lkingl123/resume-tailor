@@ -16,7 +16,13 @@ export const generateResumePDF = (result: any): void => {
   // Position tracker
   let y = topMargin;
 
-  const addLine = (text: string, size = 10, bold = false, indent = 0, align: "left" | "center" | "right" = "left") => {
+  const addLine = (
+    text: string,
+    size = 10,
+    bold = false,
+    indent = 0,
+    align: "left" | "center" | "right" = "left"
+  ) => {
     if (!text) return;
     doc.setFontSize(size);
     doc.setFont("helvetica", bold ? "bold" : "normal");
@@ -48,7 +54,7 @@ export const generateResumePDF = (result: any): void => {
 
   // === HEADER ===
   const name = result.header?.name || "Your Name";
-  addLine(name, 20, true, 0, "center"); // ✅ Centered name
+  addLine(name, 20, true, 0, "center");
   addSpacing(0.3);
 
   const headerLine = [
@@ -59,14 +65,14 @@ export const generateResumePDF = (result: any): void => {
   ]
     .filter(Boolean)
     .join(" | ");
-  addLine(headerLine, 9, false, 0, "center"); // ✅ Centered contact info
+  addLine(headerLine, 9, false, 0, "center");
   addSpacing(1);
 
   // === SUMMARY ===
   if (result.summary) {
     addLine("SUMMARY OF QUALIFICATIONS", 11, true);
     addLine(result.summary, 9.5);
-    addSpacing();
+    addSpacing(1.2); // slightly more spacing before next section
   }
 
   // === TECHNICAL SKILLS ===
@@ -78,12 +84,13 @@ export const generateResumePDF = (result: any): void => {
         addLine(`${key}: ${joined}`, 9.5);
       }
     );
-    addSpacing();
+    addSpacing(1.2); // give extra room before next section
   }
 
   // === EXPERIENCE ===
   if (Array.isArray(result.experience)) {
     addLine("PROFESSIONAL EXPERIENCE", 11, true);
+    addSpacing(0.3); // small space under section header
     result.experience.forEach((exp: any) => {
       addLine(`${exp.company || ""}, ${exp.location || ""}`, 10, true);
       addDualLine(exp.title || "", exp.dates || "", 9.5);
@@ -92,11 +99,13 @@ export const generateResumePDF = (result: any): void => {
       }
       addSpacing(0.5);
     });
+    addSpacing(1.5); // ✅ more space before next section
   }
 
   // === PROJECTS ===
   if (Array.isArray(result.projects)) {
     addLine("PROJECTS", 11, true);
+    addSpacing(0.3);
     result.projects.forEach((proj: any) => {
       addDualLine(proj.title || "", proj.dates || "", 10);
       if (Array.isArray(proj.bullets)) {
@@ -104,18 +113,21 @@ export const generateResumePDF = (result: any): void => {
       }
       addSpacing(0.5);
     });
+    addSpacing(1.5); // ✅ more space before next section
   }
 
   // === EDUCATION ===
   if (Array.isArray(result.education)) {
     addLine("EDUCATION & CERTIFICATES", 11, true);
-    result.education.forEach((edu: any) => {
+    addSpacing(0.3);
+    result.education.forEach((edu: any, index: number) => {
       addDualLine(edu.school || "", edu.dates || "", 9.5);
       addLine(edu.degree || "", 9.5, false, 12);
+      if (index < result.education.length - 1) addSpacing(0.4);
     });
   }
 
   // === SAVE ===
   doc.save("Resume_for_Companies.pdf");
-  console.log("✅ Resume generated correctly (name centered, bold dates right).");
+  console.log("✅ Resume generated (clean section spacing, name centered).");
 };
