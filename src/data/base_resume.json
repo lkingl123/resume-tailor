@@ -1,18 +1,25 @@
 {
   "header": {
-    "name": "King Loke (Jake)",
+    "name": "Jake Loke",
     "location": "West Jordan, UT",
     "phone": "385-392-3207",
     "github": "https://github.com/lkingl123",
     "linkedin": "https://linkedin.com/in/jakeloke"
   },
-  "summary": "Results-driven Software Engineer specializing in front-end development and UX design. Skilled in React, Next.js, and .NET Core, with experience building scalable, data-driven platforms for education and e-commerce.",
+  "summary": "{{ai_rewrite_summary}}",
   "technical_skills": {
-    "languages": ["C#", "JavaScript", "TypeScript", "Python", "SQL", "Bash"],
-    "frameworks": [".NET Core", "React", "Next.js", "Tailwind CSS"],
-    "cloud": ["Azure AD B2C", "Firebase", "Google Cloud Run"],
-    "architecture": ["DDD", "Event-Driven", "Minimal APIs"],
-    "tools": ["Docker", "GitHub Actions", "xUnit", "Postman", "Swagger"]
+    "Languages": ["C#", "JavaScript", "TypeScript", "Python", "SQL", "Bash"],
+    "Frameworks": [".NET Core", "React", "Next.js", "Tailwind CSS", "Node.js", "Express"],
+    "Cloud": ["Azure AD B2C", "Firebase", "Google Cloud Run", "Render", "Vercel", "Azure Functions"],
+    "Architecture": ["DDD", "Event-Driven", "Minimal APIs", "Microservices", "Layered Architecture", "RESTful Design"],
+    "DevOps": ["Docker", "GitHub Actions", "CI/CD", "Azure Pipelines", "Cloud Build", "Version Control", "Monitoring & Logging"],
+    "Databases": ["Cosmos DB", "PostgreSQL", "MongoDB", "Supabase", "SQL Server"],
+    "APIs": ["Microsoft Graph", "CAQH API", "Stability AI REST", "InFlow Inventory API", "Travelpayouts API", "Firebase SDK"],
+    "Testing": ["xUnit", "Jest", "Playwright", "Postman", "Swagger", "Unit Testing", "Integration Testing"],
+    "Security": ["OAuth2", "OpenID Connect", "RBAC", "JWT Authentication", "HIPAA Compliance", "Data Governance"],
+    "Design & UX": ["Figma", "Zeplin", "Adobe XD", "UI Prototyping", "Responsive Layouts", "User Journey Mapping"],
+    "Business & Product": ["Business Analysis", "Product Strategy", "Requirements Gathering", "Process Optimization", "Stakeholder Communication", "Agile & Scrum Methodologies", "KPI Reporting", "Data Visualization (Power BI, Google Data Studio)"],
+    "Tools": ["Visual Studio", "VS Code", "Git", "Trello", "Notion", "Slack", "Jira", "Excel Modeling"]
   },
   "experience": [
     {
@@ -28,6 +35,50 @@
       "title": "Tier 3 Support",
       "dates": "Aug 2022 – Aug 2023",
       "bullets": "{{ai_rewrite_experience_utah}}"
+    },
+    {
+      "company": "JOS Staffing",
+      "location": "Evansville, IN",
+      "title": "Business Analyst",
+      "dates": "Jun 2021 – May 2022",
+      "bullets": [
+        "Collaborated with cross-functional teams to gather and document business requirements for staffing and payroll automation tools.",
+        "Streamlined candidate tracking workflows by introducing Excel-to-database synchronization scripts, reducing manual data entry by 40%.",
+        "Supported management with KPI dashboards and labor cost analysis reports, improving visibility and decision-making efficiency.",
+        "Partnered with IT to test and validate HR software updates, ensuring data accuracy and compliance with state labor policies."
+      ]
+    }
+  ],
+  "projects": [
+    {
+      "title": "AI Smile Generation Platform",
+      "dates": "Jan 2024 – Aug 2024",
+      "bullets": [
+        "Developed a full-stack AI image inpainting platform using Flask, Next.js, and Stability AI REST API for natural smile enhancements.",
+        "Integrated Firebase Storage for secure upload and retrieval, automating the image pipeline with Python and Google Cloud Run.",
+        "Reduced manual dental photo editing by 90% through automated mouth-region detection using MediaPipe and inpainting blending.",
+        "Deployed production backend with Docker and CI/CD via Render and later migrated to Cloud Run for scalability."
+      ]
+    },
+    {
+      "title": "Orange (Provider Credentialing & Compliance Platform)",
+      "dates": "Jun 2025 – Present",
+      "bullets": [
+        "Building a HIPAA-compliant credentialing platform for healthcare providers to manage, verify, and share licensure and certification documents.",
+        "Integrated CAQH API for automatic provider data imports including NPI, state licenses, DEA, malpractice insurance, and board certifications.",
+        "Implemented AI-driven document vault for secure uploads, OCR-based field extraction, and expiration tracking with smart alerts.",
+        "Designed a mobile-first interface with quick access and time-limited sharing links for credential packets and compliance files."
+      ]
+    },
+    {
+      "title": "Pure Labs Catalog (BOM Costing & E-Commerce)",
+      "dates": "Jan 2023 – Jul 2023",
+      "bullets": [
+        "Built a cosmetic product catalog dashboard in Next.js with dynamic BOM editing and real-time cost breakdown calculators.",
+        "Integrated InFlow Inventory API with tiered pricing overrides and internal/external PDF exports.",
+        "Added caching and rate-limiting to API requests (60 req/min cap), improving fetch stability and load times by 40%.",
+        "Enabled Shopify-copyable marketing templates for non-technical managers to publish updated formulas instantly."
+      ]
     }
   ],
   "education": [
