@@ -125,30 +125,44 @@ export const generateResumePDF = (result: any): void => {
     });
   }
 
-  // === Calculate spacing ===
+  // === FIT ALL CONTENT INTO ONE PAGE ===
   const totalLines = content.length;
+  const availableHeight = bottomLimit - topMargin;
   const usedHeight = totalLines * baseLine;
-  const remaining = bottomLimit - topMargin - usedHeight;
-  const stretchPerLine = remaining > 0 ? remaining / totalLines : 0;
-  const lineHeight = baseLine + stretchPerLine;
 
-  console.log("=== SPACING ADJUST ===", { totalLines, usedHeight, remaining, lineHeight });
+  let scaleFactor = 1;
+  let lineHeight = baseLine;
 
-  // === DRAW CONTENT ===
+  // If content exceeds the page, compress text size and spacing proportionally
+  if (usedHeight > availableHeight) {
+    scaleFactor = availableHeight / usedHeight;
+    lineHeight = baseLine * scaleFactor;
+  }
+
+  console.log("=== AUTO SCALE ===", {
+    totalLines,
+    usedHeight,
+    availableHeight,
+    scaleFactor,
+    lineHeight,
+  });
+
+  // === DRAW CONTENT (scaled) ===
   let y = topMargin;
   content.forEach(({ text, size, bold, indent }: LineItem) => {
-    if (y + lineHeight > bottomLimit) {
-      doc.addPage();
-      y = topMargin;
-    }
+    const adjustedSize = size * scaleFactor;
     doc.setFont("helvetica", bold ? "bold" : "normal");
-    doc.setFontSize(size);
+    doc.setFontSize(adjustedSize);
     doc.text(text, leftMargin + (indent || 0), y, { align: "left" });
     y += lineHeight;
   });
 
-  console.log("=== FINAL PAGE METRICS ===", { finalY: y, totalPages: doc.getNumberOfPages() });
+  console.log("=== FINAL PAGE ===", {
+    finalY: y,
+    scaleFactor,
+    totalPages: doc.getNumberOfPages(),
+  });
 
   doc.save("Resume_for_Companies.pdf");
-  console.log("✅ Resume generated successfully.");
+  console.log("✅ Resume generated (fits within one page).");
 };
