@@ -92,9 +92,9 @@
       "title": "AI Smile Generation Platform",
       "dates": "Jan 2024 – Aug 2024",
       "bullets": [
-        "Developed a full-stack AI image inpainting platform using Flask, Next.js, and Stability AI REST API for natural smile enhancements.",
-        "Integrated Firebase Storage for secure upload and retrieval, automating the image pipeline with Python and Google Cloud Run.",
-        "Reduced manual dental photo editing by 90% through automated mouth-region detection using MediaPipe and inpainting blending."
+        "Developed a full-stack AI image inpainting with Next.js, and Stability AI REST API for natural smile enhancements.",
+        "Integrated Firebase Storage for secure upload and retrieval, automating with Python and Google Cloud Run.",
+        "Reduced manual dental photo editing by 90% through automated mouth-region detection using inpainting blending."
       ]
     },
     {
