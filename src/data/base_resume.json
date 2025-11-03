@@ -9,16 +9,14 @@
   "summary": "{{ai_rewrite_summary}}",
   "technical_skills": {
     "Languages": ["C#", "JavaScript", "TypeScript", "Python", "SQL", "Bash"],
-    "Frameworks": [".NET Core", "React", "Next.js", "Tailwind CSS", "Node.js", "Express"],
+    "Frameworks": [".NET Core", "React", "Next.js", "Tailwind CSS", "Node.js"],
     "Cloud": ["Azure AD B2C", "Firebase", "Google Cloud Run", "Render", "Vercel", "Azure Functions"],
-    "Architecture": ["DDD", "Event-Driven", "Minimal APIs", "Microservices", "Layered Architecture", "RESTful Design"],
+    "Architecture": ["DDD", "Event-Driven", "Minimal APIs", "Microservices","RESTful Design"],
     "DevOps": ["Docker", "GitHub Actions", "CI/CD", "Azure Pipelines", "Cloud Build", "Version Control", "Monitoring & Logging"],
     "Databases": ["Cosmos DB", "PostgreSQL", "MongoDB", "Supabase", "SQL Server"],
-    "APIs": ["Microsoft Graph", "CAQH API", "Stability AI REST", "InFlow Inventory API", "Travelpayouts API", "Firebase SDK"],
     "Testing": ["xUnit", "Jest", "Playwright", "Postman", "Swagger", "Unit Testing", "Integration Testing"],
-    "Security": ["OAuth2", "OpenID Connect", "RBAC", "JWT Authentication", "HIPAA Compliance", "Data Governance"],
+    "Security": ["OAuth2", "OpenID Connect", "RBAC", "JWT Authentication"],
     "Design & UX": ["Figma", "Zeplin", "Adobe XD", "UI Prototyping", "Responsive Layouts", "User Journey Mapping"],
-    "Business & Product": ["Business Analysis", "Product Strategy", "Requirements Gathering", "Process Optimization", "Stakeholder Communication", "Agile & Scrum Methodologies", "KPI Reporting", "Data Visualization (Power BI, Google Data Studio)"],
     "Tools": ["Visual Studio", "VS Code", "Git", "Trello", "Notion", "Slack", "Jira", "Excel Modeling"]
   },
   "experience": [
@@ -41,12 +39,7 @@
       "location": "Evansville, IN",
       "title": "Business Analyst",
       "dates": "Jun 2021 – May 2022",
-      "bullets": [
-        "Collaborated with cross-functional teams to gather and document business requirements for staffing and payroll automation tools.",
-        "Streamlined candidate tracking workflows by introducing Excel-to-database synchronization scripts, reducing manual data entry by 40%.",
-        "Supported management with KPI dashboards and labor cost analysis reports, improving visibility and decision-making efficiency.",
-        "Partnered with IT to test and validate HR software updates, ensuring data accuracy and compliance with state labor policies."
-      ]
+     "bullets": "{{ai_rewrite_experience_utah}}"
     }
   ],
   "projects": [

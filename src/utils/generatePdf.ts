@@ -5,16 +5,14 @@ export const generateResumePDF = (result: any): void => {
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
 
-  // --- margins ---
+  // Margins and layout
   const leftMargin = 25;
   const rightMargin = 25;
   const usableWidth = pageWidth - leftMargin - rightMargin;
   const topMargin = 40;
   const bottomLimit = pageHeight - 40;
-
-  // --- base line settings ---
-  const baseLine = 11; // baseline spacing
-  const minSpacing = 3; // minimal space between sections
+  const baseLine = 11;
+  const minSpacing = 3;
 
   console.log("=== PAGE METRICS ===", { pageWidth, pageHeight, usableWidth });
 
@@ -27,21 +25,21 @@ export const generateResumePDF = (result: any): void => {
 
   const content: LineItem[] = [];
 
-  // --- custom word-wrap ---
+  // --- Custom line wrapping ---
   const splitToFullWidth = (text: string, fontSize: number, maxWidth: number): string[] => {
     doc.setFontSize(fontSize);
     const words = text.split(" ");
     const lines: string[] = [];
     let current = "";
+
     for (const word of words) {
-      const test = current ? current + " " + word : word;
+      const test = current ? `${current} ${word}` : word;
       if (doc.getTextWidth(test) > maxWidth && current) {
         lines.push(current);
         current = word;
-      } else {
-        current = test;
-      }
+      } else current = test;
     }
+
     if (current) lines.push(current);
     return lines;
   };
@@ -51,7 +49,7 @@ export const generateResumePDF = (result: any): void => {
     const lines = Array.isArray(text)
       ? text.filter(Boolean)
       : splitToFullWidth(text, size, usableWidth - indent);
-    lines.forEach(line => content.push({ text: line, size, bold, indent }));
+    lines.forEach((line) => content.push({ text: line, size, bold, indent }));
   };
 
   // === HEADER ===
@@ -72,81 +70,85 @@ export const generateResumePDF = (result: any): void => {
   add("", minSpacing);
 
   // === SUMMARY ===
-  add("SUMMARY OF QUALIFICATIONS", 11, true);
-  add(result.summary || "N/A", 9.5);
-  add("", minSpacing);
+  if (result.summary) {
+    add("SUMMARY OF QUALIFICATIONS", 11, true);
+    add(result.summary, 9.5);
+    add("", minSpacing);
+  }
 
   // === TECHNICAL SKILLS ===
-  if (result.technical_skills) {
+  if (result.technical_skills && Object.keys(result.technical_skills).length > 0) {
     add("TECHNICAL SKILLS", 11, true);
     for (const [key, val] of Object.entries(result.technical_skills)) {
       const joined = Array.isArray(val) ? val.join(", ") : val;
-      add(`${key[0].toUpperCase() + key.slice(1)}: ${joined}`, 9.5);
+      add(`${key}: ${joined}`, 9.5);
     }
     add("", minSpacing);
   }
 
   // === EXPERIENCE ===
-  if (Array.isArray(result.experience)) {
+  if (Array.isArray(result.experience) && result.experience.length > 0) {
     add("PROFESSIONAL EXPERIENCE", 11, true);
-    result.experience.forEach((exp: any, i: number) => {
+    result.experience.forEach((exp: any) => {
       add(`${exp.company || ""}, ${exp.location || ""}`, 10, true);
       add(`${exp.title || ""}     ${exp.dates || ""}`, 9.5);
       if (exp.bullets) {
         (Array.isArray(exp.bullets) ? exp.bullets : [exp.bullets])
           .filter(Boolean)
-          .forEach((b: string, idx: number) => add(`• ${b}`, 9.5, false, 12));
+          .forEach((b: string) => add(`• ${b}`, 9.5, false, 12));
+      }
+      add("", minSpacing);
+    });
+  }
+
+  // === PROJECTS ===
+  if (Array.isArray(result.projects) && result.projects.length > 0) {
+    add("PROJECTS", 11, true);
+    result.projects.forEach((proj: any) => {
+      add(`${proj.title || ""}     ${proj.dates || ""}`, 10, true);
+      if (proj.bullets) {
+        (Array.isArray(proj.bullets) ? proj.bullets : [proj.bullets])
+          .filter(Boolean)
+          .forEach((b: string) => add(`• ${b}`, 9.5, false, 12));
       }
       add("", minSpacing);
     });
   }
 
   // === EDUCATION ===
-  if (Array.isArray(result.education)) {
+  if (Array.isArray(result.education) && result.education.length > 0) {
     add("EDUCATION & CERTIFICATES", 11, true);
-    result.education.forEach((edu: any, i: number) => {
+    result.education.forEach((edu: any) => {
       add(edu.school || "Unknown School", 10, true);
       add(`${edu.degree || ""}${edu.dates ? ` | ${edu.dates}` : ""}`, 9.5);
       add("", minSpacing);
     });
   }
 
-  // === Calculate dynamic spacing ===
+  // === Calculate spacing ===
   const totalLines = content.length;
   const usedHeight = totalLines * baseLine;
   const remaining = bottomLimit - topMargin - usedHeight;
   const stretchPerLine = remaining > 0 ? remaining / totalLines : 0;
-  const lineHeight = baseLine + stretchPerLine; // evenly stretch vertically
+  const lineHeight = baseLine + stretchPerLine;
 
-  console.log("=== SPACING ADJUST ===", {
-    totalLines,
-    usedHeight,
-    remaining,
-    stretchPerLine,
-    lineHeight,
-  });
+  console.log("=== SPACING ADJUST ===", { totalLines, usedHeight, remaining, lineHeight });
 
-  // === DRAW TEXT ===
+  // === DRAW CONTENT ===
   let y = topMargin;
   content.forEach(({ text, size, bold, indent }: LineItem) => {
     if (y + lineHeight > bottomLimit) {
       doc.addPage();
       y = topMargin;
     }
-
-    // ❌ removed underline (was visually unnecessary)
     doc.setFont("helvetica", bold ? "bold" : "normal");
     doc.setFontSize(size);
     doc.text(text, leftMargin + (indent || 0), y, { align: "left" });
-
     y += lineHeight;
   });
 
-  console.log("=== FINAL PAGE METRICS ===", {
-    finalY: y,
-    totalPages: doc.getNumberOfPages(),
-  });
+  console.log("=== FINAL PAGE METRICS ===", { finalY: y, totalPages: doc.getNumberOfPages() });
 
   doc.save("Resume_for_Companies.pdf");
-  console.log("✅ Resume generated with full dynamic fill.");
+  console.log("✅ Resume generated successfully.");
 };

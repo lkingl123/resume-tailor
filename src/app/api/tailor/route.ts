@@ -1,21 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
+import { jsonrepair } from "jsonrepair";
 
 export async function POST(req: NextRequest) {
   try {
     const { jobDescription } = await req.json();
 
-    // Load base resume
-    const resumePath = path.join(
-      process.cwd(),
-      "src",
-      "data",
-      "base_resume.json"
-    );
-
+    // === Load base resume JSON ===
+    const resumePath = path.join(process.cwd(), "src", "data", "base_resume.json");
     const resumeJSON = fs.readFileSync(resumePath, "utf-8");
 
+    // === Build prompt for Ollama ===
     const prompt = `
 You are a professional resume writer.
 
@@ -33,16 +29,22 @@ ${jobDescription}
 ${resumeJSON}
 
 === OUTPUT FORMAT ===
-Return a JSON with the same structure, replacing only:
-- "summary"
-- any field containing "bullets" with rewritten content.
+Return ONLY valid JSON strictly matching this structure:
+{
+  "header": {...},
+  "summary": "string",
+  "technical_skills": {...},
+  "experience": [...],
+  "projects": [...],
+  "education": [...]
+}
 
-Avoid mentioning frameworks, tools, or technologies that are not already present in the original resume.
-Focus on results, impact, metrics, and action-oriented phrasing (e.g., improved, delivered, implemented).
-Do not mention Vue.js, Angular, or other unrelated technologies.
-Keep tone professional, concise, and accomplishment-based.
+⚠️ Do not include explanations, markdown, comments, or text outside JSON.
+⚠️ Do not insert extra keys or newlines.
+⚠️ Ensure the output parses directly as valid JSON.
 `;
 
+    // === Send to Ollama ===
     const response = await fetch("http://localhost:11434/api/generate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -54,33 +56,30 @@ Keep tone professional, concise, and accomplishment-based.
     });
 
     if (!response.ok) {
-      const text = await response.text();
-      throw new Error(`Ollama request failed: ${text}`);
+      const errText = await response.text();
+      throw new Error(`Ollama request failed: ${errText}`);
     }
 
     const data = await response.json();
     const aiResponse = data.response;
 
-    // Validate and parse JSON output
+    // === Extract and repair JSON ===
     let tailoredResume;
     try {
-      const jsonMatch = aiResponse.match(/\{[\s\S]*\}/); // find first {...} JSON block
-      if (jsonMatch) {
-        tailoredResume = JSON.parse(jsonMatch[0]);
-      } else {
-        throw new Error("No JSON found in AI output");
-      }
+      const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) throw new Error("No JSON found in AI output");
+
+      const repaired = jsonrepair(jsonMatch[0]);
+      tailoredResume = JSON.parse(repaired);
     } catch (err) {
-      console.warn(
-        "⚠️ AI returned text instead of JSON — fallback to text mode:",
-        err
-      );
+      console.warn("⚠️ AI returned invalid JSON, fallback to raw text.", err);
       tailoredResume = { text: aiResponse };
     }
 
+    // === Respond to frontend ===
     return NextResponse.json({ tailoredResume });
   } catch (err: any) {
-    console.error("Error in tailor API:", err);
+    console.error("❌ Error in tailor API:", err);
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
